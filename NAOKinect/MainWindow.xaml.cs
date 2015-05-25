@@ -17,6 +17,7 @@ namespace NAOKinect
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
+    /// faccio un commento per provare a committare (FV)
     /// </summary>
     public partial class MainWindow : Window
     {
