@@ -1,20 +1,29 @@
-﻿using System;
+﻿using Microsoft.Kinect;
+using System;
+using System.Collections;
 using System.IO;
-using Microsoft.Kinect;
 
 namespace NAOKinect
 {
     public delegate void SkeletonReadyEventHandler(Skeleton[] skeletons);
 
+    /// <summary>
+    /// 
+    /// </summary>
     class Kinect
     {
         private KinectSensor sensor = null;
 
-        private bool isSkeletonActive = false;
-        private bool isAudioActive = false;
+        private ArrayList resources = new ArrayList(5);
 
+        /// <summary>
+        /// Event that fires when a new skeleton frame is available from this Kinect sensor.
+        /// </summary>
         public event SkeletonReadyEventHandler SkeletonReady;
 
+        /// <summary>
+        /// Create a new <code>Kinect</code> class. To actually use the sensor, use <code>Connect()</code>
+        /// </summary>
         public Kinect()
         {
             KinectSensor.KinectSensors.StatusChanged += KinectSensors_StatusChanged;
@@ -28,6 +37,9 @@ namespace NAOKinect
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the Kinect is currently connected.
+        /// </summary>
         public bool IsConnected
         {
             get
@@ -36,6 +48,9 @@ namespace NAOKinect
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the Kinect is currently streaming data.
+        /// </summary>
         public bool IsActive
         {
             get
@@ -44,6 +59,11 @@ namespace NAOKinect
             }
         }
 
+        /// <summary>
+        /// Try to connect to an attached Kinect sensor. It connects to the first available sensor, thus
+        /// it does not support multiple devices. This API throws a System.IO.IOException if no sensor
+        /// is connected.
+        /// </summary>
         public void Connect()
         {
             foreach (KinectSensor kinectSensor in KinectSensor.KinectSensors)
@@ -57,31 +77,42 @@ namespace NAOKinect
             throw new IOException("No kinect sensor found.");
         }
 
+        /// <summary>
+        /// Start streaming skeleton data from this Kinect. If the sensor is off, it is activated.
+        /// To receive notifications about the skeleton frames, add an handler to the SkeletonReady event.
+        /// This API may throw a System.IO.IOException if the current sensor is already in use 
+        /// by another process.
+        /// </summary>
         public void StartSkeletonStream()
         {
             if (null != sensor)
             {
-                sensor.SkeletonStream.Enable();
-                isSkeletonActive = true;
-                sensor.SkeletonFrameReady += sensor_SkeletonFrameReady;
                 Start();
+                sensor.SkeletonStream.Enable();
+                resources.Add(sensor.SkeletonStream);
+                sensor.SkeletonFrameReady += OnSkeletonFrameReady;
 
                 //Due to a bug, enabling the SkeletonStream turns off the AudioSource.
                 //If the AudioSource was active, it must be restarted.
-                if (isAudioActive)
+                if (resources.Contains(sensor.AudioSource))
                 {
                     sensor.AudioSource.Start();
                 }
             }
         }
 
+        /// <summary>
+        /// Stop streaming skeleton data from this Kinect. If nothing else is using this sensor, 
+        /// the Kinect is switched off.
+        /// </summary>
         public void StopSkeletonStream()
         {
             if (null != sensor)
             {
                 sensor.SkeletonStream.Disable();
-                isSkeletonActive = false;
-                sensor.SkeletonFrameReady -= sensor_SkeletonFrameReady;
+                resources.Remove(sensor.SkeletonStream);
+                sensor.SkeletonFrameReady -= OnSkeletonFrameReady;
+                Stop();
             }
         }
 
@@ -93,15 +124,15 @@ namespace NAOKinect
             }
         }
 
-        public void Stop()
+        private void Stop()
         {
-            if (IsActive)
+            if (IsActive && resources.Count == 0)
             {
                 sensor.Stop();
             }
         }
 
-        private void sensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
+        private void OnSkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
         {
             Skeleton[] skeletons = new Skeleton[0];
 
