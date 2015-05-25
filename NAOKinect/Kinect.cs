@@ -155,7 +155,7 @@ namespace NAOKinect
         {
             if (sensor == e.Sensor)
             {
-
+                //TODO eventualmente aggiungere gestione disconnessione sensore
             }
         }
     }
