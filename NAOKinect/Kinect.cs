@@ -7,6 +7,8 @@ namespace NAOKinect
 {
     public delegate void SkeletonReadyEventHandler(Skeleton[] skeletons);
 
+    public delegate void SpeechRecognizedEventHandler();
+
     /// <summary>
     /// 
     /// </summary>
@@ -20,6 +22,11 @@ namespace NAOKinect
         /// Event that fires when a new skeleton frame is available from this Kinect sensor.
         /// </summary>
         public event SkeletonReadyEventHandler SkeletonReady;
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        public event SpeechRecognizedEventHandler SpeechRecognized;
 
         /// <summary>
         /// Create a new <code>Kinect</code> class. To actually use the sensor, use <code>Connect()</code>
@@ -56,6 +63,14 @@ namespace NAOKinect
             get
             {
                 return null != sensor && sensor.IsRunning;
+            }
+        }
+
+        public CoordinateMapper CoordinateMapper
+        {
+            get
+            {
+                return (sensor == null)? null : sensor.CoordinateMapper;
             }
         }
 
@@ -117,6 +132,16 @@ namespace NAOKinect
                 sensor.SkeletonFrameReady -= OnSkeletonFrameReady;
                 Stop();
             }
+        }
+
+        public void StartAudioRecognition()
+        {
+
+        }
+
+        public void StopAudioRecognition()
+        {
+
         }
 
         private void Start()
