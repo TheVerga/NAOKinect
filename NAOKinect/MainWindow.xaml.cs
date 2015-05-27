@@ -25,5 +25,19 @@ namespace NAOKinect
         {
             InitializeComponent();
         }
+
+        private void WindowLoaded(object sender, RoutedEventArgs e)
+        {
+            Kinect kinect = new Kinect();
+            kinect.Connect();
+            SkeletonDrawer skeletonDrawer = new SkeletonDrawer(kinect.CoordinateMapper);
+           
+            Image.Source = skeletonDrawer.getImageSource();
+
+            kinect.SkeletonReady += skeletonDrawer.SensorSkeletonFrameReady;
+
+            kinect.StartSkeletonStream();
+
+        }
     }
 }
