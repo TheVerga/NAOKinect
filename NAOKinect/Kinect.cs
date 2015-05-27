@@ -74,7 +74,10 @@ namespace NAOKinect
                     break;
                 }
             }
-            throw new IOException("No kinect sensor found.");
+            if (sensor == null)
+            {
+                throw new IOException("No kinect sensor found.");
+            }
         }
 
         /// <summary>
