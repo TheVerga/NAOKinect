@@ -10,7 +10,7 @@ namespace NAOKinect
     /// <summary>
     /// 
     /// </summary>
-    class Kinect
+    public class Kinect
     {
         private KinectSensor sensor = null;
 
@@ -29,7 +29,7 @@ namespace NAOKinect
             KinectSensor.KinectSensors.StatusChanged += KinectSensors_StatusChanged;
         }
 
-        public ~Kinect()
+        ~Kinect()
         {
             if (sensor != null)
             {
