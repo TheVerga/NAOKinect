@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<grammar version="1.0" xml:lang="it-IT" root="Commands" tag-format="semantics/1.0-literals" xmlns="http://www.w3.org/2001/06/grammar">
+  <rule id="Commands">
+    <one-of>
+      <item>
+        <tag>Start</tag>
+        <one-of>
+          <item>
+            inizia <ruleref uri="#Objects"/>
+          </item>
+          <item>
+            comincia <ruleref uri="#Objects"/>
+          </item>
+        </one-of>
+      </item>
+      <item>
+        <tag>Stop</tag>
+        <one-of>
+          <item>
+            ferma <ruleref uri="#Objects"/>
+          </item>
+          <item>
+            stop <ruleref uri="#Objects"/>
+          </item>
+        </one-of>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="Objects">
+    <one-of>
+      <item>
+        <tag>Recording</tag>
+        <one-of>
+          <item>registrazione</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>SpeechRecognition</tag>
+        <one-of>
+          <item>riconoscimento vocale</item>
+          <item>voce</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>SkeletonStreaming</tag>
+        <one-of>
+          <item>scheletro</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>NAOImitation</tag>
+        <one-of>
+          <item>imitazione</item>
+        </one-of>
+      </item>
+    </one-of>
+  </rule>
+</grammar>
