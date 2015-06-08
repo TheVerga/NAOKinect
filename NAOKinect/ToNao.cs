@@ -12,6 +12,7 @@ namespace NAOKinect
     class ToNao
     {
         private MotionProxy motioProxy;
+        private Aldebaran.Proxies.RobotPostureProxy postureproxy;
         private Aldebaran.Proxies.MemoryProxy memProxy;
         private float fractionSpeed = 0.5f;
 
@@ -20,13 +21,19 @@ namespace NAOKinect
         {
             this.motioProxy = new MotionProxy(IP, port);
             this.memProxy = new MemoryProxy(IP, port);
+            this.postureproxy = new RobotPostureProxy(IP, port);
             kinect.SkeletonReady += move;
         }
 
         public void setUpNao()
         {
+             motioProxy.setStiffnesses("Body", 1.0f);
+             motioProxy.setSmartStiffnessEnabled(true);
              motioProxy.wakeUp();
-            //maybe some other thing
+             postureproxy.goToPosture("Stand", 0.5f);
+             //motioProxy.wbEnable(true);
+             //motioProxy.wbFootState("Fixed", "Legs");
+             //motioProxy.wbEnableBalanceConstraint(true, "Legs");
         }
 
         public void move(Skeleton[] skeletons)
@@ -41,7 +48,6 @@ namespace NAOKinect
                 foreach (BoneOrientation orientation in skel.BoneOrientations)
                 {
                     //Vecto3Float eulerM1 = Kinematic.computeEulerFromMatrixZYX(orientation.HierarchicalRotation.Matrix);
-                    //Vecto3Float eulerQ = Kinematic.computeEulerFromQuaternion(orientation.HierarchicalRotation.Quaternion);
                     //Vecto3Float eulerM2 = Kinematic.computeEulerFromMatrixXYZ(orientation.HierarchicalRotation.Matrix);
                     Vecto3Float eulerM3 = Kinematic.computeEulerFromMatrixZXY(orientation.HierarchicalRotation.Matrix);
                     this.setAngleFromOrientation(eulerM3, orientation.StartJoint,orientation.EndJoint);
@@ -70,14 +76,13 @@ namespace NAOKinect
             {
 
                 motioProxy.setAngles(NAOJointName.LShoulderPitch, rotation.Y , fractionSpeed);
-                motioProxy.setAngles(NAOJointName.LShoulderRoll, rotation.X + 0.28f, fractionSpeed);
+                motioProxy.setAngles(NAOJointName.LShoulderRoll, rotation.X + 0.70f, fractionSpeed);
                 motioProxy.setAngles(NAOJointName.LElbowYaw, -rotation.Z , fractionSpeed);
                 
             }
             else if (startJoint == JointType.ElbowLeft && endJoint == JointType.WristLeft)
             {
                 motioProxy.setAngles(NAOJointName.LElbowRoll, rotation.X , fractionSpeed);
-                motioProxy.setAngles(NAOJointName.LElbowYaw, -rotation.Z , fractionSpeed);
             }
             else if (startJoint == JointType.WristLeft)
             {
@@ -94,8 +99,51 @@ namespace NAOKinect
             }
             else if (endJoint == JointType.Head)
             {
-                motioProxy.setAngles(NAOJointName.HeadPitch, -rotation.X, fractionSpeed);
+                motioProxy.setAngles(NAOJointName.HeadPitch, -rotation.Y, fractionSpeed);
                 motioProxy.setAngles(NAOJointName.HeadYaw, rotation.Y, fractionSpeed);
+            }
+            else if(startJoint == JointType.HipCenter && endJoint == JointType.Spine){
+                
+                 //motioProxy.setAngles(NAOJointName.HipYawPitch, rotation.X  ,fractionSpeed);
+
+            }
+            else if(startJoint == JointType.HipLeft && endJoint == JointType.KneeLeft){
+
+                //motioProxy.setAngles(NAOJointName.LHipPitch, rotation.Y,fractionSpeed);
+                //motioProxy.setAngles(NAOJointName.LHipRoll, rotation.X,fractionSpeed);
+
+            }
+            else if(startJoint == JointType.HipRight && endJoint == JointType.KneeRight){
+
+                //motioProxy.setAngles(NAOJointName.RHipPitch, rotation.Y,fractionSpeed);
+                //motioProxy.setAngles(NAOJointName.RHipRoll, rotation.X,fractionSpeed);
+
+            }
+            else if(startJoint == JointType.KneeLeft && endJoint == JointType.AnkleLeft)
+            {
+
+                //motioProxy.setAngles(NAOJointName.LKneePitch, rotation.Y, fractionSpeed);
+
+            }
+            else if (startJoint == JointType.KneeRight && endJoint == JointType.AnkleRight)
+            {
+
+                //motioProxy.setAngles(NAOJointName.RKneePitch, rotation.Y, fractionSpeed);
+
+            }
+            else if (startJoint == JointType.AnkleLeft && endJoint == JointType.FootLeft)
+            {
+
+                //motioProxy.setAngles(NAOJointName.LAnklePitch, rotation.Y, fractionSpeed);
+                //motioProxy.setAngles(NAOJointName.LAnkleRoll, rotation.X, fractionSpeed);
+
+            }
+            else if (startJoint == JointType.AnkleRight && endJoint == JointType.FootRight)
+            {
+
+                //motioProxy.setAngles(NAOJointName.RAnklePitch, rotation.Y, fractionSpeed);
+                //motioProxy.setAngles(NAOJointName.RAnkleRoll, rotation.X, fractionSpeed);
+
             }
         }
     }
@@ -128,12 +176,11 @@ namespace NAOKinect
         public static String RWristYaw = "RWristYaw";
 
 
-        public static String LHipYaw = "LHipYaw";
+        //LhipYawPitch and rhipYawPitch are phisically the same motor
+        public static String HipYawPitch = "LHipYawPitch";
+
         public static String LHipPitch = "LHipPitch";
         public static String LHipRoll = "LHipRoll";
-
-
-        public static String RHipYaw = "RHipYaw";
         public static String RHipPitch = "RHipPitch";
         public static String RHipRoll = "RHipRoll";
 
@@ -150,5 +197,6 @@ namespace NAOKinect
 
         public static String RAnklePitch = "RAnklePitch";
         public static String RAnkleRoll = "RAnkleRoll";
+
     }
 }

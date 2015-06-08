@@ -78,7 +78,7 @@ namespace NAOKinect
                 {
                      sol.X = (float)Math.Asin((double)m.M32);
                      sol.Z = (float)Math.Atan2(-(double)m.M12, (double)m.M22);
-                     sol.Y = (float)Math.Atan2((double)m.M31, (double)m.M33);
+                     sol.Y = (float)Math.Atan2(-(double)m.M31, (double)m.M33);
                 }
                 else
                 {

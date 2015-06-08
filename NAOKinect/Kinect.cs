@@ -188,7 +188,14 @@ namespace NAOKinect
             if (!resources.Contains(sensor.SkeletonStream))
             {
                 TryStart();
-                sensor.SkeletonStream.Enable();
+                sensor.SkeletonStream.Enable(new TransformSmoothParameters()
+                {
+                    Smoothing = 0.75f,
+                    Correction = 0.0f,
+                    Prediction = 0.0f,
+                    JitterRadius = 0.05f,
+                    MaxDeviationRadius = 0.04f
+                });
 
                 //Add the skeleton stream to the currently active streaming resources.
                 resources.Add(sensor.SkeletonStream);
