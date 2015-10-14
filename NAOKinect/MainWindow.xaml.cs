@@ -21,6 +21,8 @@ namespace NAOKinect
     /// </summary>
     public partial class MainWindow : Window
     {
+        Kinect kinect = new Kinect();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -28,16 +30,26 @@ namespace NAOKinect
 
         private void WindowLoaded(object sender, RoutedEventArgs e)
         {
-            Kinect kinect = new Kinect();
+            kinect.KinectConnected += disableButtonKinect;
+            kinect.KinectDisconnected += enableButtonKinect;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
             kinect.Connect();
-            SkeletonDrawer skeletonDrawer = new SkeletonDrawer(kinect.CoordinateMapper);
-           
-            Image.Source = skeletonDrawer.getImageSource();
-
-            kinect.SkeletonReady += skeletonDrawer.SensorSkeletonFrameReady;
-
             kinect.StartSkeletonStream();
+            SkeletonDrawer skeletonDrawer = new SkeletonDrawer(kinect.CoordinateMapper);
+            kinect.SkeletonReady += skeletonDrawer.SensorSkeletonFrameReady;
+            Image.Source = skeletonDrawer.getImageSource();
+        }
 
+        private void enableButtonKinect(string deviceConnectionId)
+        {
+            kinectButton.IsEnabled = true;
+        }
+        private void disableButtonKinect(string deviceConnectionId)
+        {
+            kinectButton.IsEnabled = false;
         }
     }
 }
