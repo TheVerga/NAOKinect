@@ -21,7 +21,7 @@ namespace NAOKinect
         public static String LShoulderPitch = "LShoulderPitch";
 
 
-        public static String RShouderRoll = "RShoulderRoll";
+        public static String RShoulderRoll = "RShoulderRoll";
         public static String RShoulderPitch = "RShoulderPitch";
 
         public static String LElbowYaw = "LElbowYaw";
@@ -69,33 +69,79 @@ namespace NAOKinect
 
         public static float convertAngle(String jointName, float angle)
         {
-            if (jointName == NAOConversion.LHipRoll || jointName == NAOConversion.RHipRoll)
+            
+            if (jointName == NAOConversion.LShoulderPitch || jointName == NAOConversion.RShoulderPitch)
             {
-                angle = angle + 0.20f;
+                angle = ( (angle) + (float)Math.PI / 2f);
+                if (angle > 2.0857f)
+                {
+                    angle = 2.0857f;
+                }
+                else if (angle < -2.0857f)
+                {
+                    angle = -2.0857f;
+                }
             }
-            else if (jointName == NAOConversion.LShoulderPitch || jointName == NAOConversion.RShoulderPitch)
+            else if (jointName == NAOConversion.LShoulderRoll)
             {
-                angle = -(angle - 2.80f / 2f);
+                angle = -(angle + (float)Math.PI / 2f);
+
+                if (angle < -0.3142f)
+                {
+                    angle = -0.3142f;
+                }
+                else if (angle > 1.3265f)
+                {
+                    angle = 1.3265f;
+                }
             }
-            else if (jointName == NAOConversion.LShoulderRoll || jointName == RShouderRoll)
+            else if (jointName == NAOConversion.RShoulderRoll)
             {
-                angle = angle + 1.20f;
+                angle = (angle + (float)Math.PI / 2f);
+
+                if (angle > 0.3142f)
+                {
+                    angle = -0.3142f;
+                }
+                else if (angle < -1.3265f)
+                {
+                    angle = -1.3265f;
+                }
             }
-            else if (jointName == NAOConversion.LElbowYaw || jointName == NAOConversion.RElbowYaw)
+            else if (jointName == NAOConversion.LElbowYaw)
             {
-                angle = -(angle + 0.30f);
+                angle = -(float)(angle + Math.PI/4);
             }
-            else if (jointName == NAOConversion.LAnklePitch || jointName == NAOConversion.RAnklePitch)
+            else if (jointName == NAOConversion.RElbowYaw)
             {
-                angle = angle + 0.55f;
+                angle = -(angle - 0.30f);
             }
             else if (jointName == NAOConversion.HeadPitch)
             {
                 angle = -(angle);
             }
-            else if (jointName == NAOConversion.LKneePitch || jointName == NAOConversion.RKneePitch)
+            else if (jointName == NAOConversion.LElbowRoll)
             {
-                angle = -(angle);
+                angle = -angle;
+                 
+                if(angle > -0.0349f){
+                    angle = -0.0349f;
+                }
+                else if (angle < -1.5446f)
+                {
+                    angle = -1.5446f;
+                }
+            }
+            else if (jointName == NAOConversion.RElbowRoll)
+            {
+                if (angle < 0.0349f)
+                {
+                    angle = 0.0349f;
+                }
+                else if (angle > 1.5446f)
+                {
+                    angle = 1.5446f;
+                }
             }
 
             return angle;
@@ -106,20 +152,32 @@ namespace NAOKinect
         public static float convertFootStepXAxis(float stepLength)
         {
             float res = stepLength / 10f;
-            return res > +0.08f ? +0.08f : (res < -0.04f ? -0.04f : res);
+            return res ;//> +0.08f ? +0.08f : (res < -0.04f ? -0.04f : res);
         }
 
 
         //Y must be in range [+0.0880000 <-> +0.160000]
-        public static float converFootStepYAxis(float stepLength)
+        public static float converFootStepYAxis(float leftY,float rightY)
         {
+            float stepLength = 0;
+            if((leftY > 0 && rightY < 0) || (leftY < 0 && rightY > 0))
+            {
+                //Case in wich the user it is almost in the center
+                //Actualy since the user is in front of the camera there should only
+                //the case lefty < 0 && righty>0
+                stepLength = Math.Abs(leftY) + Math.Abs(rightY);
+            }
+            else {
+                stepLength = leftY > rightY ? leftY - rightY : rightY - leftY;
+            }
+
             float res = stepLength / 10f;
-            return res > 0.16f ? 0.16f : (res < +0.088f ? +0.088f : res);
+            return res;// > 0.16f ? 0.16f : (res < +0.088f ? +0.088f : res);
         }
 
-        public static System.Collections.ArrayList listOfTheJoint()
+        public static System.Collections.Generic.List<string> listOfTheJoint()
         {
-            System.Collections.ArrayList list = new System.Collections.ArrayList();
+            System.Collections.Generic.List<string> list = new System.Collections.Generic.List<string>();
             
 
             list.Add("HeadPitch");
@@ -132,19 +190,21 @@ namespace NAOKinect
             list.Add("LElbowRoll");
             list.Add("RElbowYaw");
             list.Add("RElbowRoll");
-            list.Add("LWristYaw");
-            list.Add("RWristYaw");
-            list.Add("LHipYawPitch");
-            list.Add("LHipPitch");
-            list.Add("LHipRoll");
-            list.Add("RHipPitch");
-            list.Add("RHipRoll");
-            list.Add("LKneePitch");
-            list.Add("RKneePitch");
-            list.Add("LAnklePitch");
-            list.Add("LAnkleRoll");
-            list.Add("RAnklePitch");
-            list.Add("RAnkleRoll");
+
+            //list.Add("LKneePitch");
+            //list.Add("RKneePitch");
+
+            //list.Add("LAnklePitch");
+            //list.Add("LAnkleRoll");
+            //list.Add("RAnklePitch");
+            //list.Add("RAnkleRoll");
+            //list.Add("LWristYaw");
+            //list.Add("RWristYaw");
+            //list.Add("LHipYawPitch");
+            //list.Add("LHipPitch");
+            //list.Add("LHipRoll");
+            //list.Add("RHipPitch");
+            //list.Add("RHipRoll");
 
 
             return list;

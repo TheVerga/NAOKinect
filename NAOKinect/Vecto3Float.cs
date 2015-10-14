@@ -10,6 +10,20 @@ namespace NAOKinect
     {
         private float x;
 
+        public Vecto3Float(float x, float y, float z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public Vecto3Float()
+        {
+            x = 0;
+            y = 0;
+            z = 0;
+        }
+
         public float X
         {
             get { return x; }
@@ -29,5 +43,36 @@ namespace NAOKinect
             get { return z; }
             set { z = value; }
         }
+
+
+        public float dot(Vecto3Float vect)
+        {
+            return this.x * vect.X + this.y * vect.Y + this.z * vect.Z;
+        }
+
+        public float magnitude()
+        {
+            return (float) Math.Sqrt((double )x*x + y*y + z*z);
+        }
+
+        public void normalize()
+        {
+            float magnitude = this.magnitude();
+            this.x = this.x / magnitude;
+            this.y = this.y / magnitude;
+            this.z = this.z / magnitude;
+        }
+
+        public Vecto3Float cross(Vecto3Float vec)
+        {
+            Vecto3Float res = new Vecto3Float();
+
+            res.X = this.Y * vec.Z - vec.Y * this.Z;
+            res.Y = this.Z * vec.X - vec.Z * this.X;
+            res.Z = this.X * vec.Y - vec.Z * this.Y;
+
+            return res;
+        }
+
     }
 }

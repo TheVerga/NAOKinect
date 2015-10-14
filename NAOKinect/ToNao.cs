@@ -13,13 +13,14 @@ namespace NAOKinect
         private MotionProxy motioProxy;
         private RobotPostureProxy postureproxy;
         private MemoryProxy memProxy;
-        private float fractionSpeed = 0.5f;
+        private float fractionSpeed = 0.1f;
         private Dictionary<JointType,SkeletonPoint> calibrationValue;
         private Dictionary< String, float> jointAngles;
-        private Dictionary<JointType, SkeletonPoint> footPosition;
         private Kinect sensor;
         private int avg;
         private int iteration;
+        private int avgCalibration;
+        private int iterationCalbration;
 
 
         public ToNao(String IP, int port, Kinect kinect, int avg)
@@ -30,24 +31,15 @@ namespace NAOKinect
             this.sensor = kinect;
             this.calibrationValue = new Dictionary<JointType, SkeletonPoint>();
             this.jointAngles = new Dictionary<string, float>();
-            this.footPosition = new Dictionary<JointType, SkeletonPoint>();
             this.avg = avg;
+            this.avgCalibration = 5;
+            this.iterationCalbration = 0;
 
             iteration = 0;
             sensor.SkeletonReady += calibrate;
             setUpjointAngleDictionary();
-            setUpfootPositionDictionary();
         }
 
-        private void setUpfootPositionDictionary()
-        {
-            SkeletonPoint point = new SkeletonPoint();
-            point.X = 0;
-            point.Y = 0;
-            point.Z = 0;
-            this.footPosition.Add(JointType.FootLeft, point);
-            this.footPosition.Add(JointType.FootRight, point);
-        }
 
         private void setUpjointAngleDictionary(){
             foreach(String x in NAOConversion.listOfTheJoint()){
@@ -57,10 +49,9 @@ namespace NAOKinect
 
         public void setUpNao()
         {
-            motioProxy.setStiffnesses("Body", 1.0f);
             motioProxy.setSmartStiffnessEnabled(true);
             motioProxy.wakeUp();
-            postureproxy.goToPosture("Stand", 0.5f);
+            postureproxy.goToPosture("Stand", 0.5f);//Stand LyingBack
         }
 
         public void calibrate(Skeleton[] skeletons)
@@ -70,14 +61,30 @@ namespace NAOKinect
                              select trackskeleton).FirstOrDefault();
             if (skel != null)
             {
-                foreach (Joint joint in skel.Joints)
-                {  
-                    //Calibration is made getting the first position of the skeleton
-                    //the position of the user should be almost equal to the init pose of the NAO
-                    this.calibrationValue.Add(joint.JointType, joint.Position);
+                if (this.iterationCalbration == 0)
+                {
+                    foreach (Joint joint in skel.Joints)
+                    {
+                        //Calibration is made getting the first position of the skeleton
+                        //the position of the user should be almost equal to the init pose of the NAO
+                        this.calibrationValue.Add(joint.JointType, JointUtilities.averagePoint(joint.Position, this.avgCalibration));
+                    }
+                    this.iterationCalbration++;
                 }
+                else if(this.iterationCalbration > 0 && this.iterationCalbration < this.avgCalibration)
+                {
 
-                this.endCalibration();
+                    foreach (Joint joint in skel.Joints)
+                    {
+                        this.calibrationValue[joint.JointType] = JointUtilities.averagePoint(this.calibrationValue[joint.JointType],
+                                                                 joint.Position,
+                                                                 this.avgCalibration);
+                    }
+                    this.iterationCalbration++;
+                }
+                else {
+                    this.endCalibration();
+                }   
             }
 
             
@@ -93,7 +100,8 @@ namespace NAOKinect
 
         ///<summary>
         /// Receive a vector of skeleton from which get the first or the default one.
-        /// Using the joint position campute the angles and pass them to the NAO 
+        /// Using the joint position compute the joint angles, store them and when it is
+        /// OK pass those value to NAO
         ///</summary> 
         public void convertSkeleton(Skeleton[] skeletons)
         {
@@ -103,14 +111,10 @@ namespace NAOKinect
             if (skel != null)
             {
                 this.iteration++;
-                //this.jointMovement(skel);
-                this.movementFootStep(skel);
+                this.jointMovement(skel);
                 if (iteration == avg)
                 {
-                    //MAybe this function should be called as a new thread
-                    //and passing the dictionary jointAngle by cloning it
-                    //moveJoint();   
-                    this.footStepMovement(skel);
+                    this.moveJoint();   
                     this.iteration = 0;
                 }
             }
@@ -125,96 +129,73 @@ namespace NAOKinect
             SkeletonPoint elbowLeftPos = skel.Joints[JointType.ElbowLeft].Position;
             SkeletonPoint wristLeftPos = skel.Joints[JointType.WristLeft].Position;
             SkeletonPoint shoulderLeftPos = skel.Joints[JointType.ShoulderLeft].Position;
-            float elbowLeftRollAngle = Kinematic.getAngle(shoulderLeftPos, elbowLeftPos, wristLeftPos, false);
+            float elbowLeftRollAngle = Kinematic.getAngle(shoulderLeftPos, wristLeftPos, elbowLeftPos, false);
             this.jointAngles[NAOConversion.LElbowRoll] = this.jointAngles[NAOConversion.LElbowRoll]
-                                                                + NAOConversion.convertAngle(NAOConversion.LElbowRoll,elbowLeftRollAngle) / this.avg;
+                                                        + NAOConversion.convertAngle(NAOConversion.LElbowRoll,elbowLeftRollAngle) / this.avg;
             //Right
             SkeletonPoint elbowRightPos = skel.Joints[JointType.ElbowRight].Position;
             SkeletonPoint shoulderRightPos = skel.Joints[JointType.ShoulderRight].Position;
             SkeletonPoint wristRightPos = skel.Joints[JointType.WristRight].Position;
-            float elbowRighttRollAngle = Kinematic.getAngle(shoulderRightPos, elbowRightPos, wristRightPos, false);
+            float elbowRighttRollAngle = Kinematic.getAngle(shoulderRightPos,wristRightPos ,elbowRightPos , false);
             this.jointAngles[NAOConversion.RElbowRoll] = this.jointAngles[NAOConversion.RElbowRoll]
-                                                                + NAOConversion.convertAngle(NAOConversion.RElbowRoll,elbowRighttRollAngle) / this.avg;
+                                                         + NAOConversion.convertAngle(NAOConversion.RElbowRoll,elbowRighttRollAngle) / this.avg;
 
             //SHOULDERROLL
-            SkeletonPoint shoulderCenterPos = skel.Joints[JointType.ShoulderCenter].Position;            
-            //Left                
-            float shoulderLeftRollAngle = Kinematic.getAngle(elbowLeftPos, shoulderLeftPos,
-                                                           shoulderCenterPos, false);
-            this.jointAngles[NAOConversion.LShoulderRoll] = this.jointAngles[NAOConversion.LShoulderRoll]
-                                                                + NAOConversion.convertAngle(NAOConversion.LShoulderRoll,shoulderLeftRollAngle) / this.avg;
-            //Right
-            float shoulderRightRollAngle = Kinematic.getAngle(elbowRightPos, shoulderRightPos,
-                                                           shoulderCenterPos, true);
-            this.jointAngles[NAOConversion.RShouderRoll] = this.jointAngles[NAOConversion.RShouderRoll]
-                                                                + NAOConversion.convertAngle(NAOConversion.RShouderRoll,shoulderRightRollAngle) / this.avg;
+            SkeletonPoint shoulderCenterPos = skel.Joints[JointType.ShoulderCenter].Position;
 
-            //SHOULDERPITCH
-            //Left
-            SkeletonPoint hipLeftpos = skel.Joints[JointType.HipLeft].Position;
-            float shoulderLeftPitchAngle = Kinematic.getAngle(hipLeftpos, shoulderLeftPos,
-                                       elbowLeftPos, true);  
-            float conv = NAOConversion.convertAngle(NAOConversion.LShoulderPitch,shoulderLeftPitchAngle);
-            float avgd = conv / this.avg;
-            this.jointAngles[NAOConversion.LShoulderPitch] = this.jointAngles[NAOConversion.LShoulderPitch]
-                                                                +  avgd;
+            //Left 
+            SkeletonPoint hipLeftpos = skel.Joints[JointType.HipLeft].Position;                
+            float shoulderLeftRollAngle = Kinematic.getAngleZX(hipLeftpos, shoulderLeftPos,
+                                                                elbowLeftPos);
+            this.jointAngles[NAOConversion.LShoulderRoll] = this.jointAngles[NAOConversion.LShoulderRoll]
+                                                            + NAOConversion.convertAngle(NAOConversion.LShoulderRoll,shoulderLeftRollAngle) / this.avg;
             //Right
             SkeletonPoint hipRightpos = skel.Joints[JointType.HipRight].Position;
-            float shoulderRightPitchAngle = Kinematic.getAngle(hipRightpos, shoulderRightPos,
-                                                            elbowRightPos, true);
+            float shoulderRightRollAngle = Kinematic.getAngleZX(hipRightpos, shoulderRightPos,
+                                                            elbowRightPos);
+            this.jointAngles[NAOConversion.RShoulderRoll] = this.jointAngles[NAOConversion.RShoulderRoll]
+                                                            + NAOConversion.convertAngle(NAOConversion.RShoulderRoll,shoulderRightRollAngle) / this.avg;
+
+            //SHOULDERPITCH
+            //TODO- Invece di settarlo al massimo si potrebbe cercare di calcolare l' angolo una volta che il braccio passa dietro la schiena
+                    //Valori trovati passano da 0.81 a 0.55, quindi da 46° a 31° circa
+                    //la prima idea potrebbe essere pi/2 + angolo calcoato
+            //Left
+
+            float shoulderLeftPitchAngle = Kinematic.getAngleZY(hipLeftpos, shoulderLeftPos,
+                                                               elbowLeftPos); ;
+
+            //if (elbowLeftPos.Z < this.calibrationValue[JointType.ElbowLeft].Z)
+            //{
+            //    shoulderLeftPitchAngle = Kinematic.getAngleZY(hipLeftpos, shoulderLeftPos,
+            //                                                   elbowLeftPos);
+            //}
+            //else
+            //{
+            //    shoulderLeftPitchAngle = (float)Math.PI;
+            //}
+
+            float conv = NAOConversion.convertAngle(NAOConversion.LShoulderPitch, shoulderLeftPitchAngle);
+            float avgd = conv / this.avg;
+            this.jointAngles[NAOConversion.LShoulderPitch] = this.jointAngles[NAOConversion.LShoulderPitch]
+                                                                + avgd;
+            
+            //Right
+            float shoulderRightPitchAngle;
+
+            if (elbowRightPos.Z < this.calibrationValue[JointType.ElbowRight].Z)
+            {
+               shoulderRightPitchAngle = Kinematic.getAngleZY(hipRightpos, shoulderRightPos,
+                                                                elbowRightPos);
+            }
+            else
+            {
+                shoulderRightPitchAngle = (float)Math.PI;
+            }
+         
             this.jointAngles[NAOConversion.RShoulderPitch] = this.jointAngles[NAOConversion.RShoulderPitch]
                                                                + NAOConversion.convertAngle(NAOConversion.RShoulderPitch,shoulderRightPitchAngle) / this.avg;
 
-            //HIPROLL
-            SkeletonPoint hipCenterPos = skel.Joints[JointType.HipCenter].Position;
-            //Left
-            
-            SkeletonPoint kneeLeftPos = skel.Joints[JointType.KneeLeft].Position;
-            float hipLeftRollAngle = Kinematic.getAngle(hipCenterPos, hipLeftpos, kneeLeftPos, false);
-            //this.jointAngles[NAOConversion.LHipRoll] = this.jointAngles[NAOConversion.LHipRoll]
-            //                                                   + NAOConversion.convertAngle(NAOConversion.LHipRoll,hipLeftRollAngle) / this.avg;
-            //Right
-            SkeletonPoint kneeRightPos = skel.Joints[JointType.KneeRight].Position;
-            float hipRightRollAngle = Kinematic.getAngle(hipCenterPos, hipRightpos, kneeRightPos, false);
-            //this.jointAngles[NAOConversion.RHipRoll] = this.jointAngles[NAOConversion.RHipRoll]
-            //                                                  + NAOConversion.convertAngle(NAOConversion.RHipRoll,hipRightRollAngle) / this.avg;
-
-            //HIPPITCH
-            //Left
-            float hipLeftPitchAngle = Kinematic.getAngle(this.calibrationValue[JointType.KneeLeft], hipLeftpos,
-                                                      kneeLeftPos, true);
-            //this.jointAngles[NAOConversion.LHipPitch] = this.jointAngles[NAOConversion.LHipPitch]
-            //                                                   + NAOConversion.convertAngle(NAOConversion.LHipPitch,hipLeftPitchAngle) / this.avg;
-            //Right
-            float hipRightPitchAngle = Kinematic.getAngle(this.calibrationValue[JointType.KneeRight], hipRightpos,
-                                                      kneeRightPos, true);
-            //this.jointAngles[NAOConversion.RHipPitch] = this.jointAngles[NAOConversion.RHipPitch]
-            //                                                  + NAOConversion.convertAngle(NAOConversion.RHipPitch,hipRightPitchAngle) / this.avg;
-
-            //KNEEPITCH
-            //Left
-            SkeletonPoint ankleLeftPos = skel.Joints[JointType.AnkleLeft].Position;
-            float kneeLeftPitchAngle = Kinematic.getAngle(hipLeftpos, kneeLeftPos, ankleLeftPos, false);
-            this.jointAngles[NAOConversion.LKneePitch] = this.jointAngles[NAOConversion.LKneePitch]
-                                                               + NAOConversion.convertAngle(NAOConversion.LKneePitch,kneeLeftPitchAngle) / this.avg;
-            //Right
-            SkeletonPoint ankleRightPos = skel.Joints[JointType.AnkleRight].Position;
-            float kneeRightPitchAngle = Kinematic.getAngle(hipRightpos, kneeRightPos, ankleRightPos, false);
-            this.jointAngles[NAOConversion.RKneePitch] = this.jointAngles[NAOConversion.RKneePitch]
-                                                               + NAOConversion.convertAngle(NAOConversion.RKneePitch,kneeRightPitchAngle) / this.avg;
-
-
-            //ANKLEPITCH
-            //Left
-            SkeletonPoint footLeftPos = skel.Joints[JointType.FootLeft].Position;
-            float ankleLeftPitch = Kinematic.getAngle(kneeLeftPos, ankleLeftPos, footLeftPos, false);
-            //this.jointAngles[NAOConversion.LAnklePitch] = this.jointAngles[NAOConversion.LAnklePitch]
-                                                              //+ NAOConversion.convertAngle(NAOConversion.LAnklePitch,ankleLeftPitch) / this.avg;
-            //Right
-            SkeletonPoint footRightPos = skel.Joints[JointType.FootRight].Position;
-            float ankleRightPitch = Kinematic.getAngle(kneeRightPos, ankleRightPos, footRightPos, false);
-            //this.jointAngles[NAOConversion.RAnklePitch]  = this.jointAngles[NAOConversion.RAnklePitch]
-                                                             //+ NAOConversion.convertAngle(NAOConversion.RAnklePitch,ankleRightPitch) / this.avg;
 
 
 
@@ -246,82 +227,31 @@ namespace NAOKinect
 
         private  void moveJoint()
         {
-
+            //Activate whole body balance control
+            //Fixing both left and right legs on a plane, 
+            //they can move only along X and Y axis and rotate aroun Z axis
+            //Then set the balance constraint 
             motioProxy.wbEnable(true);
-            motioProxy.wbFootState("Fixed", "Legs");
+            motioProxy.wbFootState("Fixed", "RLeg");
+            motioProxy.wbFootState("Fixed", "LLeg");
             motioProxy.wbEnableBalanceConstraint(true, "Legs");
+
+            System.Collections.ArrayList angles = new System.Collections.ArrayList();
             foreach (String x in NAOConversion.listOfTheJoint())
             {
-                
-                motioProxy.setAngles(x, this.jointAngles[x], fractionSpeed);
-                this.jointAngles[x] = 0f;
+
+                if ( x == NAOConversion.LElbowRoll || x == NAOConversion.LShoulderPitch || x == NAOConversion.LShoulderRoll || 
+                     x == NAOConversion.LElbowYaw)                   
+                {
+                    motioProxy.setAngles(x, this.jointAngles[x], fractionSpeed);
+                    System.Console.WriteLine(this.jointAngles[x]);
+                }
+                      
+                this.jointAngles[x] = 0f;                
             }
- 
+            
+            //motioProxy.angleInterpolationWithSpeed(l,angles,fractionSpeed);
         }
-
-        //----------------------------------Locomotion------------------------------------------
-
-        private void movementFootStep(Skeleton skel)
-        {
-            this.footPosition[JointType.FootLeft] = JointUtilities.averagePoint(this.footPosition[JointType.FootLeft],
-                                                                   skel.Joints[JointType.FootLeft].Position,
-                                                                   this.avg);
-            this.footPosition[JointType.FootRight] = JointUtilities.averagePoint(this.footPosition[JointType.FootRight],
-                                                                   skel.Joints[JointType.FootRight].Position,
-                                                                   this.avg);
-
-           
-        }
-
-        private void footStepMovement(Skeleton skel)
-        {
-            //Get the right and left foot position then try to move the NAO
-            //computing the distance along the Z and the X axis of the kinect which are
-            //respectively the X and the Y axis on the NAO
-            SkeletonPoint new_leftFootPos = this.footPosition[JointType.FootLeft];
-            SkeletonPoint new_rightFootPos = this.footPosition[JointType.FootRight];
-
-            SkeletonPoint old_leftFootPos = this.calibrationValue[JointType.FootLeft];
-            SkeletonPoint old_rightFootPos = this.calibrationValue[JointType.FootRight];
-
-            System.Collections.Generic.List<float> speed = new System.Collections.Generic.List<float>() { fractionSpeed };
-
-            float stepX = NAOConversion.convertFootStepXAxis(new_leftFootPos.Z - new_rightFootPos.Z);
-            float stepY = NAOConversion.converFootStepYAxis(new_leftFootPos.X - new_rightFootPos.X);
-
-            System.Collections.ArrayList mov = new System.Collections.ArrayList() { stepX, stepY, 0f };
-
-
-            if (JointUtilities.compareZXSkelPoint(new_leftFootPos, old_leftFootPos))
-            {
-                System.Collections.Generic.List<String> leg = new System.Collections.Generic.List<String>() { "LLeg" };
-                System.Collections.ArrayList movl = new System.Collections.ArrayList() { mov };
-
-                motioProxy.wbEnable(false);
-                motioProxy.setFootStepsWithSpeed(leg, movl, speed, false);
-
-                //Once the movement is done it is needed to recalibrate
-                this.calibrationValue[JointType.FootLeft] = skel.Joints[JointType.FootLeft].Position;
-            }
-            else if (JointUtilities.compareZXSkelPoint(new_rightFootPos, old_rightFootPos))
-            {
-
-                System.Collections.Generic.List<String> leg = new System.Collections.Generic.List<String>() { "RLeg" };
-                System.Collections.ArrayList movr = new System.Collections.ArrayList() { mov };
-
-                motioProxy.wbEnable(false);
-                motioProxy.setFootStepsWithSpeed(leg, movr, speed, false);
-
-                //Once the movement is done it is needed to recalibrate
-                this.calibrationValue[JointType.FootRight] = skel.Joints[JointType.FootRight].Position;
-            }
-
-
-
-        }
-
- 
-
 
     }
 }

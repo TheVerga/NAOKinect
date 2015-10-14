@@ -13,20 +13,21 @@ namespace NAOKinect
         /// Receive a rotation matrix of type Matrix4
         /// Return a Vector3Float containing the rotation around the 3 axis
         ///</summary>
-        public static Vecto3Float computeEulerFromMatrixXYZ(Matrix4 m)
+        public static Vecto3Float computeEulerFromMatrixXYZ(Matrix3x3 m)
         {
             Vecto3Float sol = new Vecto3Float();
-            if (m.M13 < 1f)
+            if (m.matrix[0,2] < 1f)
             {
-                if (m.M13 > -1f)
+                if (m.matrix[0,2] > -1f)
                 {
-                     sol.X = (float)Math.Atan2((double)-m.M23, (double)m.M33);
-                     sol.Y = (float)Math.Asin((double)m.M13);
-                     sol.Z = (float)Math.Atan2((double)-m.M12, (double)m.M11);
+
+                     sol.X = (float)Math.Atan2( - m.matrix[1,2], m.matrix[2,2]);
+                     sol.Y = (float)Math.Asin(-(m.matrix[0,2]));
+                     sol.Z = (float)Math.Atan2(-m.matrix[0,1], m.matrix[0,0]); 
                 }
                 else
                 {
-                     sol.X = -(float)Math.Atan2((double)-m.M21, (double)m.M22);
+                    sol.X = -(float)Math.Atan2(m.matrix[1,0], m.matrix[1,1]);
                      sol.Y = -(float)(Math.PI) / 2;
                      sol.Z = 0f;
                 }
@@ -34,115 +35,132 @@ namespace NAOKinect
             }
             else
             {
-                 sol.X = (float)Math.Atan2((double)-m.M21, (double)m.M22);
+                sol.X = (float)Math.Atan2(m.matrix[1,0], m.matrix[1,1]);
                  sol.Y = (float)(Math.PI) / 2;
                  sol.Z = 0f;
             }
             return sol;
         }
 
-        public static Vecto3Float computeEulerFromMatrixZXY(Matrix4 m)
-        {
-            Vecto3Float sol = new Vecto3Float();
-            if (m.M13 < 1f)
-            {
-                if (m.M13 > -1f)
-                {
-                    sol.X = (float)Math.Asin((double)m.M32);
-                    sol.Y = (float)Math.Atan2((double)-m.M12, (double)m.M22);
-                    sol.Z = (float)Math.Atan2((double)-m.M31, (double)m.M33);
-                }
-                else
-                {
-                    sol.X = -(float)(Math.PI) / 2;
-                    sol.Y = 0f;
-                    sol.Z = -(float)Math.Atan2((double)m.M13, (double)m.M11);
-                }
-
-            }
-            else
-            {
-                sol.X = (float)(Math.PI) / 2;
-                sol.Y = 0f;
-                sol.Z = -(float)Math.Atan2((double)m.M13, (double)m.M11);
-            }
-            return sol;
-        }
-
-        public static Vecto3Float computeEulerFromMatrixZYX(Matrix4 m)
-        {
-            Vecto3Float sol = new Vecto3Float();
-            if (m.M32 < +1f)
-            {
-                if (m.M32 > -1f)
-                {
-                     sol.X = (float)Math.Asin((double)m.M32);
-                     sol.Z = (float)Math.Atan2(-(double)m.M12, (double)m.M22);
-                     sol.Y = (float)Math.Atan2(-(double)m.M31, (double)m.M33);
-                }
-                else
-                {
-                     sol.X = (float)-Math.PI / 2;
-                     sol.Z = -(float)Math.Atan2((double)m.M13, (double)m.M11);
-                     sol.Y = 0f;
-                }
-
-            }
-            else
-            {
-                 sol.X = (float)Math.PI / 2;
-                 sol.Z = (float)Math.Atan2((double)m.M13, (double)m.M11);
-                 sol.Y = 0f;
-            }
-
-
-            return sol;
-        }
-
         ///<summary>
-        /// Receive a rotation matrix of type Vector4
-        /// Return a Vector3Float containing the rotation around the 3 axis
+        /// Receive three skeleton point (3D position of a joint).
+        /// Compute two vector, return the angle between them.
+        /// If something is wrong return 0
         ///</summary>
-            public static Vecto3Float computeEulerFromQuaternion(Vector4 q)
+        public static float getAngle(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c, bool sign)
+        {
+            Vecto3Float[] vector = new Vecto3Float[2];
+            //vector[0] = new Vecto3Float(b.X - c.X, b.Y - c.Y, b.Z - c.Z);
+            vector[0] = new Vecto3Float(c.X - b.X, c.Y - b.Y, c.Z - b.Z);
+            vector[1] = new Vecto3Float(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+
+
+            float v0_magnitude = vector[0].magnitude();
+            float v1_magnitude = vector[1].magnitude();
+            if (v0_magnitude != 0.0 && v1_magnitude != 0.0)
             {
+                vector[0].normalize();
+                vector[1].normalize();
 
-                // Store the Euler angles in radians
-                Vecto3Float pitchYawRoll = new Vecto3Float();
+                float sign_f = sign ? -1f : 1f;
+                double x = (double)vector[0].cross(vector[1]).magnitude();
+                double y = (double)vector[0].dot(vector[1]);
 
-                double sqw = q.W * q.W;
-                double sqx = q.X * q.X;
-                double sqy = q.Y * q.Y;
-                double sqz = q.Z * q.Z;
-
-                // If quaternion is normalised the unit is one, otherwise it is the correction factor
-                double unit = sqx + sqy + sqz + sqw;
-                double test = q.X * q.Y + q.Z * q.W;
-
-                if (test > 0.4999f * unit)                              // 0.4999f OR 0.5f - EPSILON
-                {
-                    // Singularity at north pole
-                    pitchYawRoll.Z = 2f * (float)Math.Atan2(q.X, q.W);  // Yaw
-                    pitchYawRoll.Y = (float)Math.PI * 0.5f;             // Pitch
-                    pitchYawRoll.X = 0f;                                // Roll
-                    return pitchYawRoll;
-                }
-                else if (test < -0.4999f * unit)                        // -0.4999f OR -0.5f + EPSILON
-                {
-                    // Singularity at south pole
-                    pitchYawRoll.Z = -2f * (float)Math.Atan2(q.X, q.W); // Yaw
-                    pitchYawRoll.Y = (float)-Math.PI * 0.5f;            // Pitch
-                    pitchYawRoll.X = 0f;                                // Roll
-                    return pitchYawRoll;
-                }
-                else
-                {
-                    pitchYawRoll.Z = (float)Math.Atan2(2f * q.Y * q.W - 2f * q.X * q.Z, sqx - sqy - sqz + sqw);       // Yaw
-                    pitchYawRoll.Y = (float)Math.Asin(2f * test / unit);                                             // Pitch
-                    pitchYawRoll.X = (float)Math.Atan2(2f * q.X * q.W - 2f * q.Y * q.Z, -sqx + sqy - sqz + sqw);      // Roll
-                }
-
-                return pitchYawRoll;
+                float theta = (float)Math.Atan2(sign_f * x, sign_f * y);
+                
+                return theta;// -theta;
+            }
+            else
+            {
+                return 0.0f;
             }
         }
-    }
+
+        public static float getAngleXY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
+        {
+            Vecto3Float[] vector = new Vecto3Float[2];
+            vector[0] = new Vecto3Float(c.X - b.X ,c.Y - b.Y, 0);
+            vector[1] = new Vecto3Float(a.X - b.X, a.Y - b.Y, 0);
+
+
+            float v0_magnitude = vector[0].magnitude();
+            float v1_magnitude = vector[1].magnitude();
+            if (v0_magnitude != 0.0 && v1_magnitude != 0.0)
+            {
+                vector[0].normalize();
+                vector[1].normalize();
+
+                double x = (double)vector[0].cross(vector[1]).magnitude();
+                double y = (double)vector[0].dot(vector[1]);
+
+                float theta = (float)Math.Atan2(x, y);
+
+                return -theta;
+            }
+            else
+            {
+                return 0.0f;
+            }
+        }
+
+        public static float getAngleZX(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
+        {
+            Vecto3Float[] vector = new Vecto3Float[2];
+            vector[0] = new Vecto3Float(c.X - b.X, 0, c.Z - b.Z);
+            vector[1] = new Vecto3Float(a.X - b.X, 0, a.Z - b.Z);
+
+
+            float v0_magnitude = vector[0].magnitude();
+            float v1_magnitude = vector[1].magnitude();
+            if (v0_magnitude != 0.0 && v1_magnitude != 0.0)
+            {
+                vector[0].normalize();
+                vector[1].normalize();
+
+                double x = (double)vector[0].cross(vector[1]).magnitude();
+                double y = (double)vector[0].dot(vector[1]);
+
+                float theta = (float)Math.Atan2(x, y);
+
+                return -theta;
+            }
+            else
+            {
+                return 0.0f;
+            }
+        }
+        public static float getAngleZY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
+        {
+            Vecto3Float[] vector = new Vecto3Float[2];
+            //vector[0] = new Vecto3Float(0, b.Y - c.Y, b.Z - c.Z);
+            vector[0] = new Vecto3Float(0, c.Y - b.Y, c.Z - b.Z);
+            vector[1] = new Vecto3Float(0, a.Y - b.Y, a.Z - b.Z);
+
+
+            float v0_magnitude = vector[0].magnitude();
+            float v1_magnitude = vector[1].magnitude();
+            if (v0_magnitude != 0.0 && v1_magnitude != 0.0)
+            {
+                vector[0].normalize();
+                vector[1].normalize();
+
+                double x = (double)vector[0].cross(vector[1]).magnitude();
+                double y =(double)vector[0].dot(vector[1]);
+
+                float theta = (float)Math.Atan2( x, y);
+                float theta2 = (float)Math.Atan2(-x, y);
+                float theta3 = (float)Math.Atan2(x, -y);
+                float theta4 = (float)Math.Atan2(-x,- y);
+
+                return -theta;
+            }
+            else
+            {
+                return 0.0f;
+            }
+        }
+
+   }
+ }
+   
 
