@@ -22,6 +22,7 @@ namespace NAOKinect
     public partial class MainWindow : Window
     {
         Kinect kinect = new Kinect();
+        ToNao nao;
 
         public MainWindow()
         {
@@ -50,6 +51,12 @@ namespace NAOKinect
         private void disableButtonKinect(string deviceConnectionId)
         {
             kinectButton.IsEnabled = false;
+        }
+
+        private void ConnectNAOClick(object sender, RoutedEventArgs e)
+        {
+            nao = new ToNao(IPBox.Text, int.Parse(PortBox.Text), kinect, 20);
+            nao.setUpNao();
         }
     }
 }
