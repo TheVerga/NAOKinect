@@ -64,9 +64,10 @@ namespace NAOKinect
         {
             foreach (String x in NAOConversion.listOfTheJoint())
             {
-                AngleBox.Text = x + " : " + angles[x].ToString();              
+                AngleBox.Text += x + " : " + angles[x].ToString();              
             }
 
+            AngleBox.Text += Environment.NewLine;
         }
     }
 }
