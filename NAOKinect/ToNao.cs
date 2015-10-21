@@ -269,17 +269,13 @@ namespace NAOKinect
             motioProxy.wbEnableBalanceConstraint(true, "Legs");
             System.Collections.ArrayList angles = new System.Collections.ArrayList();
 
-            System.Collections.ArrayList angles = new System.Collections.ArrayList();
             System.Collections.ArrayList joint = new System.Collections.ArrayList();
             foreach (String x in NAOConversion.listOfTheJoint())
             {
                     motioProxy.setAngles(x, this.jointAngles[x], fractionSpeed);
                     AnglesSent(jointAngles);
-                    //System.Console.WriteLine(this.jointAngles[x]);
-
-                }
-                      
-                this.jointAngles[x] = 0f;                
+                    //System.Console.WriteLine(this.jointAngles[x]);                      
+                    this.jointAngles[x] = 0f;                
             }
             //motioProxy.angleInterpolationWithSpeed(joint, angles, fractionSpeed);
         }
