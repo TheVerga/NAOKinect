@@ -8,7 +8,7 @@
             <ColumnDefinition Width="147*"/>
         </Grid.ColumnDefinitions>
         <Viewbox Stretch="Uniform" HorizontalAlignment="Center" Margin="522,0,380,0" Width="0"/>
-        <Image x:Name="Image" Margin="0,0,10,10"/>
+        <Image x:Name="Image" Margin="0,0,10,205"/>
         <Grid x:Name="portBox" Grid.Column="1" Height="560" Margin="10,10,0,0" Width="272">
             <Grid.RowDefinitions>
                 <RowDefinition/>
@@ -23,5 +23,6 @@
             <Button x:Name="naoButton" Content="Connect NAO" HorizontalAlignment="Center" Margin="42,10,0,0" Grid.Row="2" VerticalAlignment="Top" Width="181" Height="35" Background="#FFF35C24" Foreground="White" BorderBrush="#FFFF3C03" FontSize="18" Click="ConnectNAOClick"/>
             <Button x:Name="kinectButton" Content="Connect KINECT" HorizontalAlignment="Center" Margin="42,10,0,0" Grid.Row="3" VerticalAlignment="Top" Width="181" Height="35" Background="#FF2EC50C" Foreground="White" BorderBrush="#FF166E02" FontSize="18" Click="Button_Click"/>
         </Grid>
+        <TextBox x:Name="AngleBox" HorizontalAlignment="Left" Height="190" Margin="0,380,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="892"/>
     </Grid>
 </Window>

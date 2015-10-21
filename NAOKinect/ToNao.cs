@@ -8,6 +8,7 @@ using Microsoft.Kinect;
 
 namespace NAOKinect
 {
+    public delegate void AnglesSentHandler(Dictionary<string, float> angles);
     class ToNao
     {
         private MotionProxy motioProxy;
@@ -23,6 +24,7 @@ namespace NAOKinect
         private int avgCalibration;
         private int iterationCalbration;
 
+        public event AnglesSentHandler AnglesSent;
 
         public ToNao(String IP, int port, Kinect kinect, int avg)
         {
@@ -42,6 +44,14 @@ namespace NAOKinect
             sensor.SkeletonReady += calibrate;
         }
 
+        protected virtual void OnAnglesSent(EventArgs e)
+        {
+            AnglesSentHandler handler = AnglesSent;
+            if (handler != null)
+            {
+                handler(jointAngles);
+            }
+        }
 
         private void setUpjointAngleDictionary(){
             foreach(String x in NAOConversion.listOfTheJoint()){
@@ -103,10 +113,10 @@ namespace NAOKinect
 
         ///<summary>
         /// 
-        ///</summary>
+        ///</summary> 
         public void getPoint(Skeleton[] skeletons)
         {
-            Skeleton skel = (from trackskeleton in skeletons
+             Skeleton skel = (from trackskeleton in skeletons
                              where trackskeleton.TrackingState == SkeletonTrackingState.Tracked
                              select trackskeleton).FirstOrDefault();
             if (skel != null)
@@ -119,7 +129,7 @@ namespace NAOKinect
                         this.avgPoint.Add(joint.JointType, JointUtilities.averagePoint(joint.Position, this.avgCalibration));
                     }
                     this.angleMatrix(skel);
-                    this.iteration++;
+                this.iteration++;
                 }
                 else if (this.iteration > 0 && this.iteration < this.avg)
                 {
@@ -138,7 +148,7 @@ namespace NAOKinect
                     //call the function to compute the angle
                     this.angleVector();
                     //call the function to move the joint
-                    this.moveJoint();
+                    this.moveJoint();   
                     //reset iteration
                     this.iteration = 0;
                     //remove the old value from the dictionary
@@ -181,7 +191,7 @@ namespace NAOKinect
         ///</summary>
         private void angleVector()
         {
-
+            
             //ELBOWROLL
             //Left
             float elbowLeftRollAngle = Kinematic.getAngle(this.avgPoint[JointType.ShoulderLeft], 
@@ -226,8 +236,8 @@ namespace NAOKinect
                 this.jointAngles[NAOConversion.LShoulderPitch] = (float)Math.PI/2;
             }
 
-            
 
+            
             //Right
             if (this.avgPoint[JointType.ElbowRight].Z < this.avgPoint[JointType.Spine].Z ||
                  this.avgPoint[JointType.ElbowRight].Y >= this.avgPoint[JointType.Spine].Y)
@@ -241,7 +251,7 @@ namespace NAOKinect
             {
                 this.jointAngles[NAOConversion.RShoulderPitch] = (float)Math.PI/2;
             }
-
+         
         }
 
         ///<summary>
@@ -257,17 +267,32 @@ namespace NAOKinect
             motioProxy.wbFootState("Fixed", "RLeg");
             motioProxy.wbFootState("Fixed", "LLeg");
             motioProxy.wbEnableBalanceConstraint(true, "Legs");
+            System.Collections.ArrayList angles = new System.Collections.ArrayList();
 
             System.Collections.ArrayList angles = new System.Collections.ArrayList();
             System.Collections.ArrayList joint = new System.Collections.ArrayList();
             foreach (String x in NAOConversion.listOfTheJoint())
             {
-               motioProxy.setAngles(x, this.jointAngles[x], fractionSpeed);  
-                //joint.Add(x);
-                //angles.Add(this.jointAngles[x]);
-               this.jointAngles[x] = 0f;                
+                    motioProxy.setAngles(x, this.jointAngles[x], fractionSpeed);
+                    AnglesSent(jointAngles);
+                    //System.Console.WriteLine(this.jointAngles[x]);
+
+                }
+                      
+                this.jointAngles[x] = 0f;                
             }
             //motioProxy.angleInterpolationWithSpeed(joint, angles, fractionSpeed);
         }
+
+        public Dictionary<String, float> getAllJointAngles()
+        {
+            return jointAngles;
+        }
+        public float getJointAngles(string x)
+        {
+            return jointAngles[x];
+        }
+
+
     }
 }

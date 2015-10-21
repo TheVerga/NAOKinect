@@ -17,7 +17,6 @@ namespace NAOKinect
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
-    /// faccio un commento per provare a committare (FV)
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -33,6 +32,7 @@ namespace NAOKinect
         {
             kinect.KinectConnected += disableButtonKinect;
             kinect.KinectDisconnected += enableButtonKinect;
+            
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -57,6 +57,16 @@ namespace NAOKinect
         {
             nao = new ToNao(IPBox.Text, int.Parse(PortBox.Text), kinect, 20);
             nao.setUpNao();
+            nao.AnglesSent += startStreamAngles;
+        }
+
+        public void startStreamAngles(Dictionary<string, float> angles)
+        {
+            foreach (String x in NAOConversion.listOfTheJoint())
+            {
+                AngleBox.Text = x + " : " + angles[x].ToString();              
+            }
+
         }
     }
 }
