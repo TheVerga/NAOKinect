@@ -72,7 +72,7 @@ namespace NAOKinect
             
             if (jointName == NAOConversion.LShoulderPitch || jointName == NAOConversion.RShoulderPitch)
             {
-                angle = ( (angle) + (float)Math.PI / 2f);
+                angle = (float)(Math.PI/2 - angle);
                 if (angle > 2.0857f)
                 {
                     angle = 2.0857f;
@@ -84,7 +84,8 @@ namespace NAOKinect
             }
             else if (jointName == NAOConversion.LShoulderRoll)
             {
-                angle = -(angle + (float)Math.PI / 2f) + 0.30f;
+                //-0.3142 to 1.3265
+                angle = angle -1f ; ///????
 
                 if (angle < -0.3142f)
                 {
@@ -97,11 +98,11 @@ namespace NAOKinect
             }
             else if (jointName == NAOConversion.RShoulderRoll)
             {
-                angle = angle + (float)Math.PI/2f; //(angle + (float)Math.PI + 0.30f);
+                angle = -(angle - 1f); //?????
 
                 if (angle > 0.3142f)
                 {
-                    angle = -0.3142f;
+                    angle = 0.3142f;
                 }
                 else if (angle < -1.3265f)
                 {
@@ -110,11 +111,30 @@ namespace NAOKinect
             }
             else if (jointName == NAOConversion.LElbowYaw)
             {
-                angle = -(float)(angle + Math.PI/4);
+                //-2.0857 to 2.0857
+                angle = (angle - (float)Math.PI * 3 / 4);
+
+                if (angle > 2.0857f)
+                {
+                    angle = -2.0857f;
+                }
+                else if (angle < -2.0857f)
+                {
+                    angle = -2.0857f;
+                }
             }
             else if (jointName == NAOConversion.RElbowYaw)
             {
-                angle = -(angle - 0.30f);
+                //-2.0857 to 2.0857
+                angle = -(angle - (float)Math.PI * 3 / 4);
+                if (angle > 2.0857f)
+                {
+                    angle = -2.0857f;
+                }
+                else if (angle < -2.0857f)
+                {
+                    angle = -2.0857f;
+                }
             }
             else if (jointName == NAOConversion.HeadPitch)
             {
@@ -122,7 +142,7 @@ namespace NAOKinect
             }
             else if (jointName == NAOConversion.LElbowRoll)
             {
-                angle = -angle;
+                angle = -(float)(Math.PI - angle);
                  
                 if(angle > -0.0349f){
                     angle = -0.0349f;
@@ -134,6 +154,7 @@ namespace NAOKinect
             }
             else if (jointName == NAOConversion.RElbowRoll)
             {
+                angle = (float)(Math.PI - angle);
                 if (angle < 0.0349f)
                 {
                     angle = 0.0349f;

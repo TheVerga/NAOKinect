@@ -52,7 +52,7 @@ namespace NAOKinect
 
         public float magnitude()
         {
-            return (float) Math.Sqrt((double )x*x + y*y + z*z);
+            return (float) Math.Sqrt((double )(x*x + y*y + z*z));
         }
 
         public void normalize()
@@ -72,6 +72,26 @@ namespace NAOKinect
             res.Z = this.X * vec.Y - vec.Z * this.Y;
 
             return res;
+        }
+
+        public Vecto3Float projectionOntoXY()
+        {
+            return new Vecto3Float(this.X, this.Y, 0);
+        }
+
+        public Vecto3Float projectionOntoZX()
+        {
+            return new Vecto3Float(this.X, 0, this.Z);
+        }
+
+        public Vecto3Float projectionOntoZY()
+        {
+            return new Vecto3Float(0, this.y, this.z);
+        }
+
+        public Vecto3Float negate()
+        {
+            return new Vecto3Float(-this.x,- this.y, -this.z);
         }
 
     }
