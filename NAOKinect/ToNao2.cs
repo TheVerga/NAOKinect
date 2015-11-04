@@ -121,8 +121,8 @@ namespace NAOKinect
         ///</summary>
         private void angleVector()
         {
-
             SkeletonPoint shoulderLeft = this.avgPoint[JointType.ShoulderLeft];
+            SkeletonPoint shoulderCenter = this.avgPoint[JointType.ShoulderCenter];
             SkeletonPoint shoulderRight = this.avgPoint[JointType.ShoulderRight];
 
             SkeletonPoint elbowLeft = this.avgPoint[JointType.ElbowLeft];
@@ -130,6 +130,10 @@ namespace NAOKinect
 
             SkeletonPoint wristLeft = this.avgPoint[JointType.WristLeft];
             SkeletonPoint wristRight = this.avgPoint[JointType.WristRight];
+
+            SkeletonPoint hipLeft = this.avgPoint[JointType.HipLeft];            
+            SkeletonPoint hipCenter = this.avgPoint[JointType.HipCenter];
+            SkeletonPoint hipRight = this.avgPoint[JointType.HipRight];
 
             Vecto3Float upperArmLeft = new Vecto3Float(shoulderLeft.X - elbowLeft.X,
                                                        shoulderLeft.Y - elbowLeft.Y,
@@ -147,33 +151,76 @@ namespace NAOKinect
                                                         wristRight.Y - elbowRight.Y,
                                                         wristRight.Z - elbowRight.Z);
 
-            //Shoulder Roll
-            //Left
-            Vecto3Float shoulderHipLeft = new Vecto3Float(shoulderLeft.X - this.avgPoint[JointType.HipLeft].X,
-                                                          shoulderLeft.Y - this.avgPoint[JointType.HipLeft].Y,
-                                                          shoulderLeft.Z - this.avgPoint[JointType.HipLeft].Z);
-            this.jointAngles[NAOConversion.LShoulderRoll] = NAOConversion.convertAngle(NAOConversion.LShoulderRoll,
-                                                                             Kinematic.getAngleNew(upperArmLeft.projectionOntoZX(),
-                                                                                                    shoulderHipLeft.projectionOntoZX()));
 
-            //Right
-            Vecto3Float shoulderHipRight = new Vecto3Float(shoulderRight.X - this.avgPoint[JointType.HipRight].X,
-                                                           shoulderRight.Y - this.avgPoint[JointType.HipRight].Y,
-                                                           shoulderRight.Z - this.avgPoint[JointType.HipRight].Z);
-            this.jointAngles[NAOConversion.RShoulderRoll] = NAOConversion.convertAngle(NAOConversion.RShoulderRoll,
-                                                                          Kinematic.getAngleNew(shoulderHipRight.projectionOntoZX(),
-                                                                                                upperArmRight.projectionOntoZX()));
+            Vecto3Float shoulderLToHipLeft = new Vecto3Float(shoulderLeft.X - hipLeft.X,
+                                                             shoulderLeft.Y - hipLeft.Y,
+                                                             shoulderLeft.Z - hipLeft.Z);
 
-            //Shoulder Pitch
-            //Left
-            this.jointAngles[NAOConversion.LShoulderPitch] = NAOConversion.convertAngle(NAOConversion.LShoulderPitch,
-                                                                                         Kinematic.getAngleNew(upperArmLeft.projectionOntoZY(),
-                                                                                                               shoulderHipLeft.projectionOntoZY()));
+            Vecto3Float shoulderRToHipRight = new Vecto3Float(shoulderRight.X - hipRight.X,
+                                                              shoulderRight.Y - hipRight.Y,
+                                                              shoulderRight.Z - hipRight.Z);
 
-            //Right
-            this.jointAngles[NAOConversion.RShoulderPitch] = NAOConversion.convertAngle(NAOConversion.RShoulderPitch,
-                                                                                         Kinematic.getAngleNew(shoulderHipRight.projectionOntoZY(),
-                                                                                                                upperArmRight.projectionOntoZY()));
+            Vecto3Float shoulderLToShoulderC = new Vecto3Float(shoulderLeft.X - shoulderCenter.X,
+                                                               shoulderLeft.Y - shoulderCenter.Y,
+                                                               shoulderLeft.Z - shoulderCenter.Z);
+
+            Vecto3Float shoulderRToShoulderC = new Vecto3Float(shoulderRight.X - shoulderCenter.X,
+                                                               shoulderRight.Y - shoulderCenter.Y,
+                                                               shoulderRight.Z - shoulderCenter.Z);
+
+
+            if (hipLeft.Z + 0.15 > elbowLeft.Z   //if the elbow is in front of the hip
+                || elbowLeft.Y > shoulderLeft.Y - 0.1)  //OR the elbow is above the shoulder
+                
+            {
+                //Shoulder Roll
+                //Left
+
+                if (Math.Abs(shoulderLeft.Z - elbowLeft.Z) < 0.05) //upperArmLeft.Y>=0
+                {
+                    this.jointAngles[NAOConversion.LShoulderRoll] = NAOConversion.convertAngle(NAOConversion.LShoulderRoll,
+                                                                                    Kinematic.getAngleNew(upperArmLeft.projectionOntoXY(),
+                                                                                                          shoulderLToHipLeft.projectionOntoXY()));
+                }
+                else
+                {
+                    this.jointAngles[NAOConversion.LShoulderRoll] = NAOConversion.convertAngle(NAOConversion.LShoulderRoll,
+                                                                                     Kinematic.getAngleNew(upperArmLeft.projectionOntoZX(),
+                                                                                                           shoulderLToHipLeft.projectionOntoZX()));
+                }
+
+
+                //Shoulder Pitch
+                //Left
+                this.jointAngles[NAOConversion.LShoulderPitch] = NAOConversion.convertAngle(NAOConversion.LShoulderPitch,
+                                                                                             Kinematic.getAngleNew(upperArmLeft.projectionOntoZY(),
+                                                                                                                   shoulderLToHipLeft.projectionOntoZY()));
+            }
+
+            if (hipRight.Z + 0.15 > elbowRight.Z    //if the elbow is in front of the hip
+                || elbowRight.Y > shoulderLeft.Y - 0.1) //OR the elbow is above the shoulder
+            {
+
+                //Shoulder Roll
+                //Right
+                if (Math.Abs(shoulderRight.Z - elbowRight.Z) < 0.05) //upperArmLeft.Y>=0
+                {
+                    this.jointAngles[NAOConversion.RShoulderRoll] = NAOConversion.convertAngle(NAOConversion.RShoulderRoll,
+                                                                                    Kinematic.getAngleNew(upperArmRight.projectionOntoXY(),
+                                                                                                          shoulderRToHipRight.projectionOntoXY()));
+                }
+                else
+                {
+                    this.jointAngles[NAOConversion.RShoulderRoll] = NAOConversion.convertAngle(NAOConversion.RShoulderRoll,
+                                                                                     Kinematic.getAngleNew(upperArmRight.projectionOntoZX(),
+                                                                                                           shoulderRToHipRight.projectionOntoZX()));
+                }
+                //Shoulder Pitch
+                //Right
+                this.jointAngles[NAOConversion.RShoulderPitch] = NAOConversion.convertAngle(NAOConversion.RShoulderPitch,
+                                                                                             Kinematic.getAngleNew(shoulderRToHipRight.projectionOntoZY(),
+                                                                                                                    upperArmRight.projectionOntoZY()));
+            }
 
 
             //Elbow Roll
@@ -185,7 +232,6 @@ namespace NAOKinect
                                                                                     Kinematic.getAngleNew(upperArmRight, lowerArmRight));
 
             //Elbow Yaw
-            SkeletonPoint hipCenter = this.avgPoint[JointType.HipCenter];
             ////Left  
             Vecto3Float shoulderLTohipCenter = new Vecto3Float(shoulderLeft.X - hipCenter.X,
                                                                shoulderLeft.Y - hipCenter.Y,
@@ -193,7 +239,7 @@ namespace NAOKinect
             Vecto3Float lCrossCenterArm = upperArmLeft.cross(shoulderLTohipCenter);
             Vecto3Float lCrossArms = upperArmLeft.cross(lowerArmLeft);
             float lElbowYaw = Kinematic.getAngleNew(lCrossCenterArm, lCrossArms);
-            this.jointAngles[NAOConversion.LElbowYaw] = NAOConversion.convertAngle(NAOConversion.LElbowYaw,lElbowYaw);
+            this.jointAngles[NAOConversion.LElbowYaw] = NAOConversion.convertAngle(NAOConversion.LElbowYaw, lElbowYaw);
 
 
             //Right
@@ -224,10 +270,14 @@ namespace NAOKinect
             {
                 
                     motioProxy.setAngles(x, this.jointAngles[x], fractionSpeed);
-                    System.Console.WriteLine(this.jointAngles[x]);
-                    this.jointAngles[x] = 0f;
-                
-
+                    if (x == NAOConversion.HeadPitch || x == NAOConversion.HeadYaw)
+                    {
+                        this.jointAngles[x] = 0f;
+                    }
+                    if (x == NAOConversion.LShoulderRoll)
+                    {
+                        System.Console.WriteLine(this.jointAngles[x]);
+                    }
             }
         }
 
