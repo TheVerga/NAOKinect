@@ -85,8 +85,7 @@ namespace NAOKinect
             else if (jointName == NAOConversion.LShoulderRoll)
             {
                 //-0.3142 to 1.3265
-                angle = angle -1f ; ///????
-
+                angle = angle - (float)Math.PI / 4f;
                 if (angle < -0.3142f)
                 {
                     angle = -0.3142f;
@@ -98,8 +97,7 @@ namespace NAOKinect
             }
             else if (jointName == NAOConversion.RShoulderRoll)
             {
-                angle = -(angle - 1f); //?????
-
+                angle = -(angle - (float)Math.PI / 4f);
                 if (angle > 0.3142f)
                 {
                     angle = 0.3142f;
