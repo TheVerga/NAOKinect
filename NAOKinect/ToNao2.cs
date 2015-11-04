@@ -13,7 +13,7 @@ namespace NAOKinect
         private MotionProxy motioProxy;
         private RobotPostureProxy postureproxy;
         private MemoryProxy memProxy;
-        private float fractionSpeed = 0.1f;
+        private float fractionSpeed = 0.05f;
         private Dictionary<String, float> jointAngles;
         private Dictionary<JointType, SkeletonPoint> avgPoint;
         private Kinect sensor;
@@ -49,6 +49,15 @@ namespace NAOKinect
             motioProxy.wakeUp();
             postureproxy.goToPosture("Stand", 0.5f);//Stand LyingBack            
             this.sensor.SkeletonReady += getPoint;
+        }
+
+        public void setDownNao()
+        {
+            if (sensor != null)
+            {
+                this.sensor.SkeletonReady -= getPoint;
+            }
+            motioProxy.rest();
         }
 
 
@@ -169,14 +178,13 @@ namespace NAOKinect
                                                                shoulderRight.Z - shoulderCenter.Z);
 
 
-            if (hipLeft.Z + 0.15 > elbowLeft.Z   //if the elbow is in front of the hip
-                || elbowLeft.Y > shoulderLeft.Y - 0.1)  //OR the elbow is above the shoulder
-                
+            if (hipLeft.Z + 0.15 > elbowLeft.Z)   //if the elbow is in front of the hip                              
             {
                 //Shoulder Roll
                 //Left
 
-                if (Math.Abs(shoulderLeft.Z - elbowLeft.Z) < 0.05) //upperArmLeft.Y>=0
+                if (Math.Abs(shoulderLeft.Z - elbowLeft.Z) < 0.1 &&
+                    Math.Abs(shoulderLeft.X - elbowLeft.X) < 0.1)
                 {
                     this.jointAngles[NAOConversion.LShoulderRoll] = NAOConversion.convertAngle(NAOConversion.LShoulderRoll,
                                                                                     Kinematic.getAngleNew(upperArmLeft.projectionOntoXY(),
@@ -197,13 +205,14 @@ namespace NAOKinect
                                                                                                                    shoulderLToHipLeft.projectionOntoZY()));
             }
 
-            if (hipRight.Z + 0.15 > elbowRight.Z    //if the elbow is in front of the hip
-                || elbowRight.Y > shoulderLeft.Y - 0.1) //OR the elbow is above the shoulder
+            if (hipRight.Z + 0.15 > elbowRight.Z)//if the elbow is in front of the hip
+                
             {
 
                 //Shoulder Roll
                 //Right
-                if (Math.Abs(shoulderRight.Z - elbowRight.Z) < 0.05) //upperArmLeft.Y>=0
+                if (Math.Abs(shoulderRight.Z - elbowRight.Z) < 0.1 &&
+                    Math.Abs(shoulderRight.X - elbowRight.X) < 0.1)
                 {
                     this.jointAngles[NAOConversion.RShoulderRoll] = NAOConversion.convertAngle(NAOConversion.RShoulderRoll,
                                                                                     Kinematic.getAngleNew(upperArmRight.projectionOntoXY(),
