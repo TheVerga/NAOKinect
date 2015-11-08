@@ -107,6 +107,7 @@
     <Compile Include="SkeletonDrawer.cs" />
     <Compile Include="SkeletonRecorder.cs" />
     <Compile Include="ToNao.cs" />
+    <Compile Include="ToNao2.cs" />
     <Compile Include="Vecto3Float.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
