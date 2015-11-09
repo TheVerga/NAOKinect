@@ -127,7 +127,7 @@ namespace NAOKinect
             }
         }
 
-        public static float getAngleZX(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c) //hip shou elbow
+        public static float getAngleZX(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
         {
             Vecto3Float[] vector = new Vecto3Float[2];
             vector[0] = new Vecto3Float(c.X - b.X, 0, c.Z - b.Z);
@@ -153,7 +153,7 @@ namespace NAOKinect
                 return 0.0f;
             }
         }
-        public static float getAngleZY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c) //Elb  //Sho  //hip
+        public static float getAngleZY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
         {
             Vecto3Float[] vector = new Vecto3Float[2];
             //vector[0] = new Vecto3Float(0, b.Y - c.Y, b.Z - c.Z);
