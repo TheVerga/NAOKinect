@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,30 +16,54 @@ namespace NAOKinect
         public static Vecto3Float computeEulerFromMatrixXYZ(Matrix3x3 m)
         {
             Vecto3Float sol = new Vecto3Float();
-            if (m.matrix[0,2] < 1f)
+            if (m.matrix[0, 2] < 1f)
             {
-                if (m.matrix[0,2] > -1f)
+                if (m.matrix[0, 2] > -1f)
                 {
 
-                     sol.X = (float)Math.Atan2( - m.matrix[1,2], m.matrix[2,2]);
-                     sol.Y = (float)Math.Asin(-(m.matrix[0,2]));
-                     sol.Z = (float)Math.Atan2(-m.matrix[0,1], m.matrix[0,0]); 
+                    sol.X = (float)Math.Atan2(-m.matrix[1, 2], m.matrix[2, 2]);
+                    sol.Y = (float)Math.Asin(-(m.matrix[0, 2]));
+                    sol.Z = (float)Math.Atan2(-m.matrix[0, 1], m.matrix[0, 0]);
                 }
                 else
                 {
-                    sol.X = -(float)Math.Atan2(m.matrix[1,0], m.matrix[1,1]);
-                     sol.Y = -(float)(Math.PI) / 2;
-                     sol.Z = 0f;
+                    sol.X = -(float)Math.Atan2(m.matrix[1, 0], m.matrix[1, 1]);
+                    sol.Y = -(float)(Math.PI) / 2;
+                    sol.Z = 0f;
                 }
 
             }
             else
             {
-                sol.X = (float)Math.Atan2(m.matrix[1,0], m.matrix[1,1]);
-                 sol.Y = (float)(Math.PI) / 2;
-                 sol.Z = 0f;
+                sol.X = (float)Math.Atan2(m.matrix[1, 0], m.matrix[1, 1]);
+                sol.Y = (float)(Math.PI) / 2;
+                sol.Z = 0f;
             }
             return sol;
+        }
+
+        public static float getAngleNew(Vecto3Float vect1, Vecto3Float vect2)
+
+        {
+            vect1.normalize();
+            vect2.normalize();
+
+            if (vect1.magnitude() != 0.0 && vect2.magnitude() != 0.0)
+            {
+                double x = (double)vect1.cross(vect2).magnitude();
+                double y = (double)vect1.dot(vect2);
+
+                return atan2(x, y);
+            }
+            else
+            {
+                return 0f;
+            }
+        }
+
+        public static float atan2(double x, double y)
+        {
+            return (float)Math.Atan2(x, y);
         }
 
         ///<summary>
@@ -67,7 +91,7 @@ namespace NAOKinect
                 double y = (double)vector[0].dot(vector[1]);
 
                 float theta = (float)Math.Atan2(sign_f * x, sign_f * y);
-                
+
                 return theta;// -theta;
             }
             else
@@ -79,7 +103,7 @@ namespace NAOKinect
         public static float getAngleXY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
         {
             Vecto3Float[] vector = new Vecto3Float[2];
-            vector[0] = new Vecto3Float(c.X - b.X ,c.Y - b.Y, 0);
+            vector[0] = new Vecto3Float(c.X - b.X, c.Y - b.Y, 0);
             vector[1] = new Vecto3Float(a.X - b.X, a.Y - b.Y, 0);
 
 
@@ -103,7 +127,7 @@ namespace NAOKinect
             }
         }
 
-        public static float getAngleZX(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
+        public static float getAngleZX(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c) //hip shou elbow
         {
             Vecto3Float[] vector = new Vecto3Float[2];
             vector[0] = new Vecto3Float(c.X - b.X, 0, c.Z - b.Z);
@@ -129,7 +153,7 @@ namespace NAOKinect
                 return 0.0f;
             }
         }
-        public static float getAngleZY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c)
+        public static float getAngleZY(SkeletonPoint a, SkeletonPoint b, SkeletonPoint c) //Elb  //Sho  //hip
         {
             Vecto3Float[] vector = new Vecto3Float[2];
             //vector[0] = new Vecto3Float(0, b.Y - c.Y, b.Z - c.Z);
@@ -145,12 +169,12 @@ namespace NAOKinect
                 vector[1].normalize();
 
                 double x = (double)vector[0].cross(vector[1]).magnitude();
-                double y =(double)vector[0].dot(vector[1]);
+                double y = (double)vector[0].dot(vector[1]);
 
-                float theta = (float)Math.Atan2( x, y);
+                float theta = (float)Math.Atan2(x, y);
                 float theta2 = (float)Math.Atan2(-x, y);
                 float theta3 = (float)Math.Atan2(x, -y);
-                float theta4 = (float)Math.Atan2(-x,- y);
+                float theta4 = (float)Math.Atan2(-x, -y);
 
                 return -theta;
             }
@@ -160,7 +184,7 @@ namespace NAOKinect
             }
         }
 
-   }
- }
-   
+    }
+}
+
 
